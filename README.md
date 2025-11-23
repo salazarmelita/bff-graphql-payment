@@ -1,24 +1,17 @@
-# 🚀 GraphQL Payment BFF
+# 🪙 ODIHNX GraphQL Payment
 
-Backend for Frontend (BFF) implementando **Clean Architecture** + **Arquitectura Hexagonal** para servicios de pago con GraphQL y gRPC.
+Backend for Frontend (BFF) implementando **Clean Architecture** + **Arquitectura Hexagonal** para servicio de flujo de pago
 
 ## 📋 Características
 
 - ✅ **Clean Architecture** con separación clara de capas
 - ✅ **Arquitectura Hexagonal** con puertos e interfaces bien definidos
-- ✅ **GraphQL API** con gqlgen v0.17.78+
 - ✅ **gRPC Client** para comunicación con microservicios
-- ✅ **Dependency Injection** con contenedor personalizado
 - ✅ **Health Check** endpoint `/ping`
-- ✅ **GraphQL Playground** en ruta raíz `/`
-- ✅ **CORS** configurado para desarrollo
-- ✅ **Docker** ready con multi-stage build
-- ✅ **Graceful Shutdown** con contexto y timeout
 
 ## 🏗️ Arquitectura
 
 ```
-Clean Architecture + Hexagonal Architecture
 ├── Domain (Core) - Sin dependencias externas
 │   ├── model/       # Entidades y Value Objects
 │   ├── ports/       # Interfaces de casos de uso
@@ -32,13 +25,9 @@ Clean Architecture + Hexagonal Architecture
     ├── inbound/     # Adaptadores de entrada (GraphQL)
     └── outbound/    # Adaptadores de salida (gRPC, Cache)
 ```
-
+---
 ## 🚀 Inicio Rápido
 
-### Prerrequisitos
-
-- Go 1.21+
-- Git
 
 ### Instalación
 
@@ -158,28 +147,6 @@ docker build -t graphql-payment-bff .
 docker run -p 8080:8080 graphql-payment-bff
 ```
 
-## ⚙️ Configuración
-
-### Variables de Entorno
-
-Copia `.env.example` a `.env` y configura:
-
-```env
-# Server Configuration
-SERVER_PORT=8080
-
-# gRPC Services Configuration
-PAYMENT_SERVICE_GRPC_ADDRESS=localhost:50051
-
-# JWT Configuration (for future use)
-JWT_SECRET=your-jwt-secret-key
-JWKS_URL=https://your-auth-provider.com/.well-known/jwks.json
-
-# Development Configuration
-ENVIRONMENT=development
-LOG_LEVEL=debug
-```
-
 ## 🧪 Testing
 
 ### Probar la API
@@ -193,6 +160,7 @@ curl http://localhost:8080/ping
    - Ir a http://localhost:8080/
    - Ejecutar queries de ejemplo
 
+
 3. **GraphQL Query con curl:**
 ```bash
 curl -X POST \
@@ -202,31 +170,3 @@ curl -X POST \
     "query": "query { ping }"
   }'
 ```
-
-## 📋 Próximos Pasos
-
-- [ ] Implementar autenticación JWT
-- [ ] Agregar más servicios de pago
-- [ ] Implementar WebSocket subscriptions
-- [ ] Agregar logging estructurado
-- [ ] Implementar métricas y observabilidad
-- [ ] Agregar tests unitarios e integración
-- [ ] Configurar CI/CD pipeline
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crear branch para feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para detalles.
-
----
-
-**🚀 Happy Coding!** 
-
-Para más información, revisa la documentación en [PROMPT_INICIALIZAR_NUEVO_BFF.md](PROMPT_INICIALIZAR_NUEVO_BFF.md)# bff-graphql-payment
