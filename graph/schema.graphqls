@@ -1,0 +1,71 @@
+type Query {
+  # Payment Infrastructure
+  getPaymentInfraByID(input: GetPaymentInfraByIDInput!): PaymentInfraResponse!
+}
+
+type Mutation {
+  # Placeholder for future mutations
+  _empty: String
+}
+
+type Subscription {
+  # Placeholder for future subscriptions  
+  _empty: String
+}
+
+# ========== INPUT TYPES ==========
+
+input GetPaymentInfraByIDInput {
+  paymentRackId: String!
+}
+
+# ========== RESPONSE TYPES ==========
+
+type PaymentInfraResponse {
+  transactionId: String!
+  message: String!
+  status: ResponseStatus!
+  paymentRack: PaymentRack
+  installation: PaymentInstallation
+  bookingTimes: [PaymentBookingTime!]!
+}
+
+# ========== DOMAIN TYPES ==========
+
+type PaymentRack {
+  id: Int!
+  description: String!
+  address: String!
+}
+
+type PaymentInstallation {
+  id: Int!
+  name: String!
+  region: String!
+  city: String!
+  address: String!
+  imageUrl: String!
+}
+
+type PaymentBookingTime {
+  id: Int!
+  name: String!
+  unitMeasurement: UnitMeasurement!
+  amount: Int!
+}
+
+# ========== ENUMS ==========
+
+enum ResponseStatus {
+  RESPONSE_STATUS_UNSPECIFIED
+  RESPONSE_STATUS_OK
+  RESPONSE_STATUS_ERROR
+}
+
+enum UnitMeasurement {
+  UNSPECIFIED
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}

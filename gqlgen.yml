@@ -1,0 +1,29 @@
+schema:
+  - graph/schema.graphqls
+
+exec:
+  filename: graph/generated/generated.go
+  package: generated
+
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/infrastructure/inbound/graphql/resolver
+  package: resolver
+  filename_template: "{name}.resolvers.go"
+
+autobind:
+  - "graphql-payment-bff/graph/model"
+
+models:
+  Int:
+    model: github.com/99designs/gqlgen/graphql.Int
+  ResponseStatus:
+    model: graphql-payment-bff/graph/model.ResponseStatus
+  UnitMeasurement:
+    model: graphql-payment-bff/graph/model.UnitMeasurement
+
+omit_slice_element_pointers: false

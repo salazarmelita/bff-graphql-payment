@@ -1,0 +1,12 @@
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/go
+    out: gen/go/v1
+    opt:
+      - paths=source_relative
+      - module=graphql-payment-bff
+  - plugin: buf.build/grpc/go
+    out: gen/go/v1
+    opt:
+      - paths=source_relative
+      - module=graphql-payment-bff

@@ -1,0 +1,40 @@
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Go build artifacts
+main
+main.exe
+*.exe
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies
+vendor/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+temp/

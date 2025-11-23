@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  graphql-payment-bff:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - PAYMENT_SERVICE_GRPC_ADDRESS=payment-service:50051
+      - ENVIRONMENT=development
+      - LOG_LEVEL=debug
+    networks:
+      - payment-network
+    depends_on:
+      - payment-service-mock
+
+  # Mock Payment Service for development/testing
+  payment-service-mock:
+    image: golang:1.21-alpine
+    ports:
+      - "50051:50051"
+    command: >
+      sh -c "echo 'Mock Payment Service running on :50051' && 
+             while true; do sleep 30; done"
+    networks:
+      - payment-network
+
+networks:
+  payment-network:
+    driver: bridge
+
+volumes:
+  payment-data:
