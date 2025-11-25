@@ -5,7 +5,7 @@ import (
 	"graphql-payment-bff/internal/domain/model"
 )
 
-// PaymentInfraRepository defines the repository interface for payment infrastructure data
+// PaymentInfraRepository define la interfaz del repositorio para datos de infraestructura de pagos
 type PaymentInfraRepository interface {
 	GetPaymentInfraByID(ctx context.Context, paymentRackID string) (*model.PaymentInfra, error)
 	GetAvailableLockers(ctx context.Context, paymentRackID int, bookingTimeID int) (*model.AvailableLockers, error)
