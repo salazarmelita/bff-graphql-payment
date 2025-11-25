@@ -35,3 +35,63 @@ func (s *PaymentInfraService) GetPaymentInfraByID(ctx context.Context, paymentRa
 
 	return paymentInfra, nil
 }
+
+// GetAvailableLockers retrieves available lockers by rack ID and booking time
+func (s *PaymentInfraService) GetAvailableLockers(ctx context.Context, paymentRackID int, bookingTimeID int) (*model.AvailableLockers, error) {
+	// Validate input
+	if paymentRackID <= 0 {
+		return nil, exception.ErrInvalidPaymentRackID
+	}
+
+	if bookingTimeID <= 0 {
+		return nil, exception.ErrInvalidBookingTimeID
+	}
+
+	// Call repository
+	lockers, err := s.repo.GetAvailableLockers(ctx, paymentRackID, bookingTimeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return lockers, nil
+}
+
+// ValidateDiscountCoupon validates a discount coupon
+func (s *PaymentInfraService) ValidateDiscountCoupon(ctx context.Context, couponCode string) (*model.DiscountCouponValidation, error) {
+	// Validate input
+	if strings.TrimSpace(couponCode) == "" {
+		return nil, exception.ErrInvalidCouponCode
+	}
+
+	// Call repository
+	validation, err := s.repo.ValidateDiscountCoupon(ctx, couponCode)
+	if err != nil {
+		return nil, err
+	}
+
+	return validation, nil
+}
+
+// GeneratePurchaseOrder generates a purchase order
+func (s *PaymentInfraService) GeneratePurchaseOrder(ctx context.Context, groupID int, couponCode *string, userEmail string, userPhone string) (*model.PurchaseOrder, error) {
+	// Validate input
+	if groupID <= 0 {
+		return nil, exception.ErrInvalidGroupID
+	}
+
+	if strings.TrimSpace(userEmail) == "" {
+		return nil, exception.ErrInvalidEmail
+	}
+
+	if strings.TrimSpace(userPhone) == "" {
+		return nil, exception.ErrInvalidPhone
+	}
+
+	// Call repository
+	order, err := s.repo.GeneratePurchaseOrder(ctx, groupID, couponCode, userEmail, userPhone)
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
