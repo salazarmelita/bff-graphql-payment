@@ -18,29 +18,29 @@ import (
 )
 
 func main() {
-	// Load environment variables
+	// Cargar variables de entorno
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
 
-	// Get configuration
+	// Obtener configuración
 	cfg := getConfig()
 
-	// Initialize dependency container
+	// Inicializar contenedor de dependencias
 	container, err := config.NewContainer(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize container: %v", err)
 	}
 	defer container.Close()
 
-	// Create GraphQL server
+	// Crear servidor GraphQL
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
 			generated.Config{Resolvers: container.GraphQLResolver},
 		),
 	)
 
-	// Setup CORS
+	// Configurar CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Configure appropriately for production
 		AllowCredentials: true,
@@ -48,23 +48,23 @@ func main() {
 		AllowedHeaders:   []string{"*"},
 	})
 
-	// Setup routes
+	// Configurar rutas
 	mux := http.NewServeMux()
 
-	// GraphQL endpoint
+	// Endpoint GraphQL
 	mux.Handle("/query", c.Handler(srv))
 
 	// GraphQL Playground
 	mux.Handle("/", playground.Handler("GraphQL Playground", "/query"))
 
-	// Health check endpoint
+	// Endpoint de verificación de salud
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"message":"pong"}`))
 	})
 
-	// Create HTTP server
+	// Crear servidor HTTP
 	server := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      mux,
@@ -73,7 +73,7 @@ func main() {
 		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
-	// Start server in goroutine
+	// Iniciar servidor en goroutine
 	go func() {
 		log.Printf("🚀 GraphQL Payment BFF Server ready at http://localhost:%s/", cfg.Server.Port)
 		log.Printf("📊 GraphQL Playground available at http://localhost:%s/", cfg.Server.Port)
@@ -84,17 +84,17 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server
+	// Esperar señal de interrupción para apagar el servidor gracefully
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("🛑 Shutting down server...")
 
-	// Give outstanding requests a deadline for completion
+	// Dar tiempo límite a las solicitudes pendientes para completarse
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Shutdown server
+	// Apagar servidor
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
@@ -102,11 +102,11 @@ func main() {
 	log.Println("✅ Server exited")
 }
 
-// getConfig loads configuration from environment variables
+// getConfig carga la configuración desde variables de entorno
 func getConfig() config.Config {
 	cfg := config.DefaultConfig()
 
-	// Override with environment variables if present
+	// Sobrescribir con variables de entorno si están presentes
 	if port := os.Getenv("SERVER_PORT"); port != "" {
 		cfg.Server.Port = port
 	}
