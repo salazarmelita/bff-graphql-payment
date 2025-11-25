@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// MockPaymentInfraRepository implements PaymentInfraRepository for testing
+// MockPaymentInfraRepository implementa PaymentInfraRepository para pruebas
 type MockPaymentInfraRepository struct {
 	mockFunc func(ctx context.Context, paymentRackID string) (*model.PaymentInfra, error)
 }
