@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-// Config holds all configuration for the application
+// Config contiene toda la configuración de la aplicación
 type Config struct {
 	Server ServerConfig
 	GRPC   GRPCConfig
 }
 
-// ServerConfig holds server configuration
+// ServerConfig contiene la configuración del servidor
 type ServerConfig struct {
 	Port         string
 	ReadTimeout  time.Duration
@@ -22,29 +22,29 @@ type ServerConfig struct {
 	IdleTimeout  time.Duration
 }
 
-// GRPCConfig holds gRPC client configuration
+// GRPCConfig contiene la configuración del cliente gRPC
 type GRPCConfig struct {
 	PaymentServiceAddress string
 	Timeout               time.Duration
 }
 
-// Container holds all application dependencies
+// Container contiene todas las dependencias de la aplicación
 type Container struct {
-	// Services
+	// Servicios
 	PaymentInfraService ports.PaymentInfraService
 
 	// Resolvers
 	GraphQLResolver *resolver.Resolver
 
-	// Infrastructure
+	// Infraestructura
 	PaymentServiceClient *client.PaymentServiceGRPCClient
 }
 
-// NewContainer creates a new dependency injection container
+// NewContainer crea un nuevo contenedor de inyección de dependencias
 func NewContainer(config Config) (*Container, error) {
 	container := &Container{}
 
-	// Initialize gRPC client
+	// Inicializar cliente gRPC
 	paymentClient, err := client.NewPaymentServiceGRPCClient(
 		config.GRPC.PaymentServiceAddress,
 		config.GRPC.Timeout,
@@ -54,16 +54,16 @@ func NewContainer(config Config) (*Container, error) {
 	}
 	container.PaymentServiceClient = paymentClient
 
-	// Initialize services
+	// Inicializar servicios
 	container.PaymentInfraService = service.NewPaymentInfraService(paymentClient)
 
-	// Initialize resolvers
+	// Inicializar resolvers
 	container.GraphQLResolver = resolver.NewResolver(container.PaymentInfraService)
 
 	return container, nil
 }
 
-// Close closes all resources
+// Close cierra todos los recursos
 func (c *Container) Close() error {
 	if c.PaymentServiceClient != nil {
 		return c.PaymentServiceClient.Close()
@@ -71,7 +71,7 @@ func (c *Container) Close() error {
 	return nil
 }
 
-// DefaultConfig returns default configuration
+// DefaultConfig devuelve la configuración por defecto
 func DefaultConfig() Config {
 	return Config{
 		Server: ServerConfig{
