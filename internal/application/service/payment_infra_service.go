@@ -8,26 +8,26 @@ import (
 	"strings"
 )
 
-// PaymentInfraService implements the payment infrastructure use cases
+// PaymentInfraService implementa los casos de uso de infraestructura de pagos
 type PaymentInfraService struct {
 	repo ports.PaymentInfraRepository
 }
 
-// NewPaymentInfraService creates a new payment infrastructure service
+// NewPaymentInfraService crea un nuevo servicio de infraestructura de pagos
 func NewPaymentInfraService(repo ports.PaymentInfraRepository) *PaymentInfraService {
 	return &PaymentInfraService{
 		repo: repo,
 	}
 }
 
-// GetPaymentInfraByID retrieves payment infrastructure by ID
+// GetPaymentInfraByID obtiene la infraestructura de pagos por ID
 func (s *PaymentInfraService) GetPaymentInfraByID(ctx context.Context, paymentRackID string) (*model.PaymentInfra, error) {
-	// Validate input
+	// Validar entrada
 	if strings.TrimSpace(paymentRackID) == "" {
 		return nil, exception.ErrInvalidPaymentRackID
 	}
 
-	// Call repository
+	// Llamar al repositorio
 	paymentInfra, err := s.repo.GetPaymentInfraByID(ctx, paymentRackID)
 	if err != nil {
 		return nil, err
@@ -36,9 +36,9 @@ func (s *PaymentInfraService) GetPaymentInfraByID(ctx context.Context, paymentRa
 	return paymentInfra, nil
 }
 
-// GetAvailableLockers retrieves available lockers by rack ID and booking time
+// GetAvailableLockers obtiene los lockers disponibles por ID de rack y tiempo de reserva
 func (s *PaymentInfraService) GetAvailableLockers(ctx context.Context, paymentRackID int, bookingTimeID int) (*model.AvailableLockers, error) {
-	// Validate input
+	// Validar entrada
 	if paymentRackID <= 0 {
 		return nil, exception.ErrInvalidPaymentRackID
 	}
@@ -47,7 +47,7 @@ func (s *PaymentInfraService) GetAvailableLockers(ctx context.Context, paymentRa
 		return nil, exception.ErrInvalidBookingTimeID
 	}
 
-	// Call repository
+	// Llamar al repositorio
 	lockers, err := s.repo.GetAvailableLockers(ctx, paymentRackID, bookingTimeID)
 	if err != nil {
 		return nil, err
@@ -56,14 +56,14 @@ func (s *PaymentInfraService) GetAvailableLockers(ctx context.Context, paymentRa
 	return lockers, nil
 }
 
-// ValidateDiscountCoupon validates a discount coupon
+// ValidateDiscountCoupon valida un cupón de descuento
 func (s *PaymentInfraService) ValidateDiscountCoupon(ctx context.Context, couponCode string) (*model.DiscountCouponValidation, error) {
-	// Validate input
+	// Validar entrada
 	if strings.TrimSpace(couponCode) == "" {
 		return nil, exception.ErrInvalidCouponCode
 	}
 
-	// Call repository
+	// Llamar al repositorio
 	validation, err := s.repo.ValidateDiscountCoupon(ctx, couponCode)
 	if err != nil {
 		return nil, err
@@ -72,9 +72,9 @@ func (s *PaymentInfraService) ValidateDiscountCoupon(ctx context.Context, coupon
 	return validation, nil
 }
 
-// GeneratePurchaseOrder generates a purchase order
+// GeneratePurchaseOrder genera una orden de compra
 func (s *PaymentInfraService) GeneratePurchaseOrder(ctx context.Context, groupID int, couponCode *string, userEmail string, userPhone string) (*model.PurchaseOrder, error) {
-	// Validate input
+	// Validar entrada
 	if groupID <= 0 {
 		return nil, exception.ErrInvalidGroupID
 	}
@@ -87,7 +87,7 @@ func (s *PaymentInfraService) GeneratePurchaseOrder(ctx context.Context, groupID
 		return nil, exception.ErrInvalidPhone
 	}
 
-	// Call repository
+	// Llamar al repositorio
 	order, err := s.repo.GeneratePurchaseOrder(ctx, groupID, couponCode, userEmail, userPhone)
 	if err != nil {
 		return nil, err
