@@ -163,6 +163,48 @@ func (c *PaymentServiceGRPCClient) GetPurchaseOrderByPo(ctx context.Context, pur
 	return c.mapper.ToPurchaseOrderDataDomain(response), nil
 }
 
+// CheckBookingStatus implementa PaymentInfraRepository.CheckBookingStatus
+func (c *PaymentServiceGRPCClient) CheckBookingStatus(ctx context.Context, serviceName string, currentCode string) (*model.BookingStatusCheck, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	request := c.mapper.ToCheckBookingStatusRequest(serviceName, currentCode)
+
+	// Mock por ahora
+	response := c.mockCheckBookingStatus(request)
+
+	if response == nil {
+		return nil, exception.ErrPaymentInfraServiceUnavailable
+	}
+
+	if response.Response != nil && response.Response.Status == dto.PaymentManagerResponseStatus_RESPONSE_STATUS_ERROR {
+		return nil, exception.ErrBookingNotFound
+	}
+
+	return c.mapper.ToBookingStatusDomain(response), nil
+}
+
+// ExecuteOpen implementa PaymentInfraRepository.ExecuteOpen
+func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName string, currentCode string) (*model.ExecuteOpenResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	request := c.mapper.ToExecuteOpenRequest(serviceName, currentCode)
+
+	// Mock por ahora
+	response := c.mockExecuteOpen(request)
+
+	if response == nil {
+		return nil, exception.ErrPaymentInfraServiceUnavailable
+	}
+
+	if response.Response != nil && response.Response.Status == dto.PaymentManagerResponseStatus_RESPONSE_STATUS_ERROR {
+		return nil, exception.ErrExecuteOpenFailed
+	}
+
+	return c.mapper.ToExecuteOpenDomain(response), nil
+}
+
 // Close cierra la conexión gRPC
 func (c *PaymentServiceGRPCClient) Close() error {
 	return c.conn.Close()
@@ -408,6 +450,44 @@ func (c *PaymentServiceGRPCClient) mockGetPurchaseOrderByPo(request *dto.GetPurc
 			Status:             "PAID",
 			CreatedAt:          time.Now().Format(time.RFC3339),
 		},
+	}
+}
+
+// mockCheckBookingStatus simula la verificación de estado de reserva
+func (c *PaymentServiceGRPCClient) mockCheckBookingStatus(request *dto.CheckBookingStatusRequest) *dto.CheckBookingStatusResponse {
+	return &dto.CheckBookingStatusResponse{
+		Response: &dto.PaymentManagerGenericResponse{
+			TransactionId: time.Now().Format("20060102150405"),
+			Message:       "Success",
+			Status:        dto.PaymentManagerResponseStatus_RESPONSE_STATUS_OK,
+		},
+		Booking: &dto.BookingStatusRecord{
+			Id:                     123,
+			ConfigurationBookingId: 456,
+			InitBooking:            time.Now().Add(-24 * time.Hour).Format(time.RFC3339),
+			FinishBooking:          time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+			InstallationName:       "Locker Centro",
+			NumberLocker:           15,
+			DeviceId:               "device-789",
+			CurrentCode:            request.CurrentCode,
+			Openings:               2,
+			ServiceName:            request.ServiceName,
+			EmailRecipient:         "usuario@example.com",
+			CreatedAt:              time.Now().Add(-48 * time.Hour).Format(time.RFC3339),
+			UpdatedAt:              time.Now().Format(time.RFC3339),
+		},
+	}
+}
+
+// mockExecuteOpen simula la apertura de locker
+func (c *PaymentServiceGRPCClient) mockExecuteOpen(request *dto.ExecuteOpenRequest) *dto.ExecuteOpenResponse {
+	return &dto.ExecuteOpenResponse{
+		Response: &dto.PaymentManagerGenericResponse{
+			TransactionId: time.Now().Format("20060102150405"),
+			Message:       "Locker abierto exitosamente",
+			Status:        dto.PaymentManagerResponseStatus_RESPONSE_STATUS_OK,
+		},
+		Status: dto.OpenStatus_OPEN_STATUS_SUCCESS,
 	}
 }
 
