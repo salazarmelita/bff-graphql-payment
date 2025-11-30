@@ -31,7 +31,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize container: %v", err)
 	}
-	defer container.Close()
+
+	// Inicializar gestor de ciclo de vida
+	lifecycle := config.NewLifecycle(container)
+	defer func() {
+		if err := lifecycle.Shutdown(); err != nil {
+			log.Printf("Error during shutdown: %v", err)
+		}
+	}()
 
 	// Crear servidor GraphQL
 	srv := handler.NewDefaultServer(
