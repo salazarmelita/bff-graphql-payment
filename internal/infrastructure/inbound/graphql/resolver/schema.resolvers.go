@@ -35,6 +35,18 @@ func (r *mutationResolver) GenerateBooking(ctx context.Context, input model.Gene
 	return r.mapper.ToBookingResponse(booking), nil
 }
 
+// ExecuteOpen is the resolver for the executeOpen field.
+func (r *mutationResolver) ExecuteOpen(ctx context.Context, input model.ExecuteOpenInput) (*model.ExecuteOpenResponse, error) {
+	// Llamar al caso de uso
+	openResult, err := r.paymentInfraService.ExecuteOpen(ctx, input.ServiceName, input.CurrentCode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute open: %w", err)
+	}
+
+	// Mapear a respuesta GraphQL
+	return r.mapper.ToExecuteOpenResponse(openResult), nil
+}
+
 // GetPaymentInfraByQRValue is the resolver for the getPaymentInfraByQrValue field.
 func (r *queryResolver) GetPaymentInfraByQRValue(ctx context.Context, input model.GetPaymentInfraByQRValueInput) (*model.PaymentInfraResponse, error) {
 	// Llamar al caso de uso
@@ -83,6 +95,18 @@ func (r *queryResolver) GetPurchaseOrderByPo(ctx context.Context, input model.Ge
 	return r.mapper.ToPurchaseOrderDataResponse(orderData), nil
 }
 
+// CheckBookingStatus is the resolver for the checkBookingStatus field.
+func (r *queryResolver) CheckBookingStatus(ctx context.Context, input model.CheckBookingStatusInput) (*model.CheckBookingStatusResponse, error) {
+	// Llamar al caso de uso
+	bookingStatus, err := r.paymentInfraService.CheckBookingStatus(ctx, input.ServiceName, input.CurrentCode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check booking status: %w", err)
+	}
+
+	// Mapear a respuesta GraphQL
+	return r.mapper.ToBookingStatusResponse(bookingStatus), nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -91,17 +115,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *subscriptionResolver) Empty(ctx context.Context) (<-chan *string, error) {
-	panic(fmt.Errorf("not implemented: Empty - _empty"))
-}
-func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
-type subscriptionResolver struct{ *Resolver }
-*/
