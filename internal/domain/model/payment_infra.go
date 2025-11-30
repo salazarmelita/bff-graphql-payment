@@ -137,3 +137,48 @@ type PurchaseOrderData struct {
 	OrderStatus        string
 	CreatedAt          string
 }
+
+// BookingStatusCheck representa el resultado de verificar el estado de una reserva
+type BookingStatusCheck struct {
+	TransactionID string
+	Message       string
+	Status        ResponseStatus
+	Booking       *BookingStatusData
+}
+
+// BookingStatusData representa los datos completos de una reserva
+type BookingStatusData struct {
+	ID                     int
+	ConfigurationBookingID int
+	InitBooking            string
+	FinishBooking          string
+	InstallationName       string
+	NumberLocker           int
+	DeviceID               string
+	CurrentCode            string
+	Openings               int
+	ServiceName            string
+	EmailRecipient         string
+	CreatedAt              string
+	UpdatedAt              string
+}
+
+// ExecuteOpenResult representa el resultado de ejecutar la apertura de un locker
+type ExecuteOpenResult struct {
+	TransactionID string
+	Message       string
+	Status        ResponseStatus
+	OpenStatus    OpenStatus
+}
+
+// OpenStatus enumeración de estados de apertura de locker
+type OpenStatus string
+
+const (
+	OpenStatusUnspecified OpenStatus = "OPEN_STATUS_UNSPECIFIED"
+	OpenStatusReceived    OpenStatus = "OPEN_STATUS_RECEIVED"
+	OpenStatusRequested   OpenStatus = "OPEN_STATUS_REQUESTED"
+	OpenStatusExecuted    OpenStatus = "OPEN_STATUS_EXECUTED"
+	OpenStatusError       OpenStatus = "OPEN_STATUS_ERROR"
+	OpenStatusSuccess     OpenStatus = "OPEN_STATUS_SUCCESS"
+)
