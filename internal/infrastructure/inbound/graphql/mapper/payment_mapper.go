@@ -207,3 +207,70 @@ func (m *PaymentInfraGraphQLMapper) ToPurchaseOrderDataResponse(orderData *domai
 		},
 	}
 }
+
+// ToBookingStatusResponse mapea el modelo de dominio a respuesta GraphQL
+func (m *PaymentInfraGraphQLMapper) ToBookingStatusResponse(bookingStatus *domainModel.BookingStatusCheck) *model.CheckBookingStatusResponse {
+	if bookingStatus == nil {
+		return nil
+	}
+
+	response := &model.CheckBookingStatusResponse{
+		TransactionID: bookingStatus.TransactionID,
+		Message:       bookingStatus.Message,
+		Status:        m.mapResponseStatus(bookingStatus.Status),
+	}
+
+	if bookingStatus.Booking != nil {
+		response.Booking = &model.BookingStatusData{
+			ID:                     bookingStatus.Booking.ID,
+			ConfigurationBookingID: bookingStatus.Booking.ConfigurationBookingID,
+			InitBooking:            bookingStatus.Booking.InitBooking,
+			FinishBooking:          bookingStatus.Booking.FinishBooking,
+			InstallationName:       bookingStatus.Booking.InstallationName,
+			NumberLocker:           bookingStatus.Booking.NumberLocker,
+			DeviceID:               bookingStatus.Booking.DeviceID,
+			CurrentCode:            bookingStatus.Booking.CurrentCode,
+			Openings:               bookingStatus.Booking.Openings,
+			ServiceName:            bookingStatus.Booking.ServiceName,
+			EmailRecipient:         bookingStatus.Booking.EmailRecipient,
+			CreatedAt:              bookingStatus.Booking.CreatedAt,
+			UpdatedAt:              bookingStatus.Booking.UpdatedAt,
+		}
+	}
+
+	return response
+}
+
+// ToExecuteOpenResponse mapea el modelo de dominio a respuesta GraphQL
+func (m *PaymentInfraGraphQLMapper) ToExecuteOpenResponse(openResult *domainModel.ExecuteOpenResult) *model.ExecuteOpenResponse {
+	if openResult == nil {
+		return nil
+	}
+
+	return &model.ExecuteOpenResponse{
+		TransactionID: openResult.TransactionID,
+		Message:       openResult.Message,
+		Status:        m.mapResponseStatus(openResult.Status),
+		OpenStatus:    m.mapOpenStatusToGraphQL(openResult.OpenStatus),
+	}
+}
+
+// mapOpenStatusToGraphQL mapea el enum OpenStatus de dominio a GraphQL
+func (m *PaymentInfraGraphQLMapper) mapOpenStatusToGraphQL(status domainModel.OpenStatus) model.OpenStatus {
+	switch status {
+	case domainModel.OpenStatusUnspecified:
+		return model.OpenStatusOpenStatusUnspecified
+	case domainModel.OpenStatusReceived:
+		return model.OpenStatusOpenStatusReceived
+	case domainModel.OpenStatusRequested:
+		return model.OpenStatusOpenStatusRequested
+	case domainModel.OpenStatusExecuted:
+		return model.OpenStatusOpenStatusExecuted
+	case domainModel.OpenStatusError:
+		return model.OpenStatusOpenStatusError
+	case domainModel.OpenStatusSuccess:
+		return model.OpenStatusOpenStatusSuccess
+	default:
+		return model.OpenStatusOpenStatusUnspecified
+	}
+}

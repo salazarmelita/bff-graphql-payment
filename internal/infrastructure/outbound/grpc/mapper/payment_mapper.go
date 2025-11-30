@@ -300,3 +300,91 @@ func (m *PaymentInfraGRPCMapper) ToPurchaseOrderDataDomain(response *dto.GetPurc
 
 	return orderData
 }
+
+// ToCheckBookingStatusRequest mapea a solicitud gRPC para verificar estado de booking
+func (m *PaymentInfraGRPCMapper) ToCheckBookingStatusRequest(serviceName string, currentCode string) *dto.CheckBookingStatusRequest {
+	return &dto.CheckBookingStatusRequest{
+		ServiceName: serviceName,
+		CurrentCode: currentCode,
+	}
+}
+
+// ToBookingStatusDomain mapea la respuesta gRPC al modelo de dominio de booking status
+func (m *PaymentInfraGRPCMapper) ToBookingStatusDomain(response *dto.CheckBookingStatusResponse) *model.BookingStatusCheck {
+	if response == nil {
+		return nil
+	}
+
+	bookingStatus := &model.BookingStatusCheck{}
+
+	if response.Response != nil {
+		bookingStatus.TransactionID = response.Response.TransactionId
+		bookingStatus.Message = response.Response.Message
+		bookingStatus.Status = m.mapResponseStatus(response.Response.Status)
+	}
+
+	if response.Booking != nil {
+		bookingStatus.Booking = &model.BookingStatusData{
+			ID:                     int(response.Booking.Id),
+			ConfigurationBookingID: int(response.Booking.ConfigurationBookingId),
+			InitBooking:            response.Booking.InitBooking,
+			FinishBooking:          response.Booking.FinishBooking,
+			InstallationName:       response.Booking.InstallationName,
+			NumberLocker:           int(response.Booking.NumberLocker),
+			DeviceID:               response.Booking.DeviceId,
+			CurrentCode:            response.Booking.CurrentCode,
+			Openings:               int(response.Booking.Openings),
+			ServiceName:            response.Booking.ServiceName,
+			EmailRecipient:         response.Booking.EmailRecipient,
+			CreatedAt:              response.Booking.CreatedAt,
+			UpdatedAt:              response.Booking.UpdatedAt,
+		}
+	}
+
+	return bookingStatus
+}
+
+// ToExecuteOpenRequest mapea a solicitud gRPC para ejecutar apertura
+func (m *PaymentInfraGRPCMapper) ToExecuteOpenRequest(serviceName string, currentCode string) *dto.ExecuteOpenRequest {
+	return &dto.ExecuteOpenRequest{
+		ServiceName: serviceName,
+		CurrentCode: currentCode,
+	}
+}
+
+// ToExecuteOpenDomain mapea la respuesta gRPC al modelo de dominio de execute open
+func (m *PaymentInfraGRPCMapper) ToExecuteOpenDomain(response *dto.ExecuteOpenResponse) *model.ExecuteOpenResult {
+	if response == nil {
+		return nil
+	}
+
+	openResult := &model.ExecuteOpenResult{
+		OpenStatus: m.mapOpenStatus(response.Status),
+	}
+
+	if response.Response != nil {
+		openResult.TransactionID = response.Response.TransactionId
+		openResult.Message = response.Response.Message
+		openResult.Status = m.mapResponseStatus(response.Response.Status)
+	}
+
+	return openResult
+}
+
+// mapOpenStatus convierte el estado de apertura gRPC a estado de dominio
+func (m *PaymentInfraGRPCMapper) mapOpenStatus(status dto.OpenStatus) model.OpenStatus {
+	switch status {
+	case dto.OpenStatus_OPEN_STATUS_RECEIVED:
+		return model.OpenStatusReceived
+	case dto.OpenStatus_OPEN_STATUS_REQUESTED:
+		return model.OpenStatusRequested
+	case dto.OpenStatus_OPEN_STATUS_EXECUTED:
+		return model.OpenStatusExecuted
+	case dto.OpenStatus_OPEN_STATUS_ERROR:
+		return model.OpenStatusError
+	case dto.OpenStatus_OPEN_STATUS_SUCCESS:
+		return model.OpenStatusSuccess
+	default:
+		return model.OpenStatusUnspecified
+	}
+}
