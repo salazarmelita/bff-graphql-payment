@@ -23,10 +23,10 @@ func (r *mutationResolver) GeneratePurchaseOrder(ctx context.Context, input mode
 	return r.mapper.ToPurchaseOrderResponse(order), nil
 }
 
-// GetPaymentInfraByID is the resolver for the getPaymentInfraByID field.
-func (r *queryResolver) GetPaymentInfraByID(ctx context.Context, input model.GetPaymentInfraByIDInput) (*model.PaymentInfraResponse, error) {
+// GetPaymentInfraByQRValue is the resolver for the getPaymentInfraByQrValue field.
+func (r *queryResolver) GetPaymentInfraByQRValue(ctx context.Context, input model.GetPaymentInfraByQRValueInput) (*model.PaymentInfraResponse, error) {
 	// Llamar al caso de uso
-	paymentInfra, err := r.paymentInfraService.GetPaymentInfraByID(ctx, input.PaymentRackID)
+	paymentInfra, err := r.paymentInfraService.GetPaymentInfraByQrValue(ctx, input.QRValue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get payment infrastructure: %w", err)
 	}
@@ -64,27 +64,15 @@ func (r *subscriptionResolver) Empty(ctx context.Context) (<-chan *string, error
 	panic(fmt.Errorf("not implemented: Empty - _empty"))
 }
 
-// Mutation devuelve la implementación de generated.MutationResolver.
+// Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
-// Query devuelve la implementación de generated.QueryResolver.
+// Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// Subscription devuelve la implementación de generated.SubscriptionResolver.
+// Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) Empty(ctx context.Context) (*string, error) {
-	panic(fmt.Errorf("not implemented: Empty - _empty"))
-}
-*/
