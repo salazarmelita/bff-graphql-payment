@@ -61,6 +61,7 @@ type AvailableLockers struct {
 	TransactionID   string
 	Message         string
 	Status          ResponseStatus
+	TraceID         string
 	AvailableGroups []AvailablePaymentGroup
 }
 
@@ -78,6 +79,7 @@ type DiscountCouponValidation struct {
 	TransactionID      string
 	Message            string
 	Status             ResponseStatus
+	TraceID            string
 	IsValid            bool
 	DiscountPercentage float64
 }
@@ -87,6 +89,7 @@ type PurchaseOrder struct {
 	TransactionID      string
 	Message            string
 	Status             ResponseStatus
+	TraceID            string
 	OC                 string
 	Email              string
 	Phone              string
@@ -97,4 +100,40 @@ type PurchaseOrder struct {
 	ProductDescription string
 	LockerPosition     int
 	InstallationName   string
+}
+
+// Booking representa una reserva de locker
+type Booking struct {
+	TransactionID    string
+	Message          string
+	Status           ResponseStatus
+	TraceID          string
+	ID               int
+	PurchaseOrder    string
+	CurrentCode      string
+	InitBooking      string
+	FinishBooking    string
+	LockerPosition   int
+	InstallationName string
+	CreatedAt        string
+}
+
+// PurchaseOrderData representa los datos completos de una orden de compra
+type PurchaseOrderData struct {
+	TransactionID      string
+	Message            string
+	Status             ResponseStatus
+	TraceID            string
+	OC                 string
+	Email              string
+	Phone              string
+	Discount           float64
+	ProductPrice       int
+	FinalProductPrice  int
+	ProductName        string
+	ProductDescription string
+	LockerPosition     int
+	InstallationName   string
+	OrderStatus        string
+	CreatedAt          string
 }
