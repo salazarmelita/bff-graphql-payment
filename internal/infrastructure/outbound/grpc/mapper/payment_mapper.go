@@ -13,15 +13,15 @@ func NewPaymentInfraGRPCMapper() *PaymentInfraGRPCMapper {
 	return &PaymentInfraGRPCMapper{}
 }
 
-// ToCreateRequest mapea la entrada de dominio a solicitud gRPC
-func (m *PaymentInfraGRPCMapper) ToCreateRequest(paymentRackID string) *dto.GetPaymentInfraByIDRequest {
-	return &dto.GetPaymentInfraByIDRequest{
-		PaymentRackId: paymentRackID,
+// ToGetPaymentInfraByQrValueRequest mapea la entrada de dominio a solicitud gRPC
+func (m *PaymentInfraGRPCMapper) ToGetPaymentInfraByQrValueRequest(qrValue string) *dto.GetPaymentInfraByQrValueRequest {
+	return &dto.GetPaymentInfraByQrValueRequest{
+		QrValue: qrValue,
 	}
 }
 
 // ToDomain mapea la respuesta gRPC al modelo de dominio
-func (m *PaymentInfraGRPCMapper) ToDomain(response *dto.GetPaymentInfraByIDResponse) *model.PaymentInfra {
+func (m *PaymentInfraGRPCMapper) ToDomain(response *dto.GetPaymentInfraByQrValueResponse) *model.PaymentInfra {
 	if response == nil {
 		return nil
 	}
@@ -34,6 +34,9 @@ func (m *PaymentInfraGRPCMapper) ToDomain(response *dto.GetPaymentInfraByIDRespo
 		paymentInfra.Message = response.Response.Message
 		paymentInfra.Status = m.mapResponseStatus(response.Response.Status)
 	}
+
+	// Mapear trace ID desde el nivel de respuesta
+	paymentInfra.TraceID = response.TraceId
 
 	// Mapear rack de pagos
 	if response.PaymentRack != nil {
