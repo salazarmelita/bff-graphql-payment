@@ -10,6 +10,9 @@ type Query {
 
   # Get Purchase Order by PO
   getPurchaseOrderByPo(input: GetPurchaseOrderByPoInput!): PurchaseOrderResponse!
+
+  # Check Booking Status
+  checkBookingStatus(input: CheckBookingStatusInput!): CheckBookingStatusResponse!
 }
 
 type Mutation {
@@ -18,6 +21,9 @@ type Mutation {
 
   # Generate Booking
   generateBooking(input: GenerateBookingInput!): GenerateBookingResponse!
+
+  # Execute Open Locker
+  executeOpen(input: ExecuteOpenInput!): ExecuteOpenResponse!
 }
 
 # ========== INPUT TYPES ==========
@@ -55,6 +61,16 @@ input GenerateBookingInput {
 input GetPurchaseOrderByPoInput {
   purchaseOrder: String!
   traceId: String!
+}
+
+input CheckBookingStatusInput {
+  serviceName: String!
+  currentCode: String!
+}
+
+input ExecuteOpenInput {
+  serviceName: String!
+  currentCode: String!
 }
 
 # ========== RESPONSE TYPES ==========
@@ -119,6 +135,20 @@ type PurchaseOrderResponse {
   purchaseOrderData: PurchaseOrderData!
 }
 
+type CheckBookingStatusResponse {
+  transactionId: String!
+  message: String!
+  status: ResponseStatus!
+  booking: BookingStatusData
+}
+
+type ExecuteOpenResponse {
+  transactionId: String!
+  message: String!
+  status: ResponseStatus!
+  openStatus: OpenStatus!
+}
+
 # ========== DOMAIN TYPES ==========
 
 type PaymentRack {
@@ -177,6 +207,22 @@ type PurchaseOrderData {
   createdAt: String!
 }
 
+type BookingStatusData {
+  id: Int!
+  configurationBookingId: Int!
+  initBooking: String!
+  finishBooking: String!
+  installationName: String!
+  numberLocker: Int!
+  deviceId: String!
+  currentCode: String!
+  openings: Int!
+  serviceName: String!
+  emailRecipient: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
 # ========== ENUMS ==========
 
 enum ResponseStatus {
@@ -191,4 +237,13 @@ enum UnitMeasurement {
   DAY
   WEEK
   MONTH
+}
+
+enum OpenStatus {
+  OPEN_STATUS_UNSPECIFIED
+  OPEN_STATUS_RECEIVED
+  OPEN_STATUS_REQUESTED
+  OPEN_STATUS_EXECUTED
+  OPEN_STATUS_ERROR
+  OPEN_STATUS_SUCCESS
 }
