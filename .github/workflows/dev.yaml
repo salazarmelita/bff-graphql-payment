@@ -8,7 +8,7 @@ on:
 env:
   ENVIRONMENT: dev
   ECR_REGISTRY: 590184058323.dkr.ecr.us-east-1.amazonaws.com
-  IMAGE_NAME: bff-graphql
+  IMAGE_NAME: bff-graphql-payment
   REPO_OWNER: Odihnx
   PROTO_BUF_REGISTRY_PAYMENT_API: buf.build/odihnx-prod/service-payment-manager
   PROTO_BUF_REGISTRY_BOOKING_API: buf.build/odihnx-prod/service-booking-manager
