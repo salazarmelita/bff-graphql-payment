@@ -27,6 +27,7 @@ func NewContainer(config Config) (*Container, error) {
 	// Inicializar cliente gRPC (mock o real según configuración)
 	paymentClient, err := client.NewPaymentServiceGRPCClient(
 		config.GRPC.PaymentServiceAddress,
+		config.GRPC.BookingServiceAddress,
 		config.GRPC.PaymentServiceTimeout,
 		config.General.UseMock,
 	)
