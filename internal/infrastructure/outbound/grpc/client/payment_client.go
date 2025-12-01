@@ -3,7 +3,8 @@ package client
 import (
 	"context"
 	"fmt"
-	pb "graphql-payment-bff/gen/go/v1"
+	bookingpb "graphql-payment-bff/gen/go/proto/booking"
+	paymentpb "graphql-payment-bff/gen/go/proto/payment"
 	"graphql-payment-bff/internal/application/ports"
 	"graphql-payment-bff/internal/domain/exception"
 	"graphql-payment-bff/internal/domain/model"
@@ -20,24 +21,28 @@ import (
 
 // PaymentServiceGRPCClient implementa PaymentInfraRepository usando gRPC
 type PaymentServiceGRPCClient struct {
-	conn       *grpc.ClientConn
-	grpcClient pb.PaymentManagerServiceClient
-	mapper     *mapper.PaymentInfraGRPCMapper
-	timeout    time.Duration
-	useMock    bool // Flag para determinar si usar mocks o cliente real
+	conn          *grpc.ClientConn
+	bookingConn   *grpc.ClientConn
+	grpcClient    paymentpb.PaymentServiceClient
+	bookingClient bookingpb.BookingServiceClient
+	mapper        *mapper.PaymentInfraGRPCMapper
+	timeout       time.Duration
+	useMock       bool // Flag para determinar si usar mocks o cliente real
 }
 
 // NewPaymentServiceGRPCClient crea un nuevo cliente gRPC para el servicio de pagos
-func NewPaymentServiceGRPCClient(serverAddress string, timeout time.Duration, useMock bool) (*PaymentServiceGRPCClient, error) {
+func NewPaymentServiceGRPCClient(paymentAddress string, bookingAddress string, timeout time.Duration, useMock bool) (*PaymentServiceGRPCClient, error) {
 	var conn *grpc.ClientConn
-	var grpcClient pb.PaymentManagerServiceClient
+	var bookingConn *grpc.ClientConn
+	var grpcClient paymentpb.PaymentServiceClient
+	var bookingClient bookingpb.BookingServiceClient
 	var err error
 
 	// Solo intentar conectar si NO estamos usando mocks
 	if !useMock {
-		log.Printf("🔌 Connecting to Payment Service at %s (Real API)", serverAddress)
+		log.Printf("🔌 Connecting to Payment Service at %s (Real API)", paymentAddress)
 		conn, err = grpc.Dial(
-			serverAddress,
+			paymentAddress,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithBlock(),
 			grpc.WithTimeout(timeout),
@@ -45,18 +50,34 @@ func NewPaymentServiceGRPCClient(serverAddress string, timeout time.Duration, us
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to payment service: %w", err)
 		}
-		grpcClient = pb.NewPaymentManagerServiceClient(conn)
+		grpcClient = paymentpb.NewPaymentServiceClient(conn)
 		log.Printf("✅ Connected to Payment Service successfully")
+
+		log.Printf("🔌 Connecting to Booking Service at %s (Real API)", bookingAddress)
+		bookingConn, err = grpc.Dial(
+			bookingAddress,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+			grpc.WithTimeout(timeout),
+		)
+		if err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("failed to connect to booking service: %w", err)
+		}
+		bookingClient = bookingpb.NewBookingServiceClient(bookingConn)
+		log.Printf("✅ Connected to Booking Service successfully")
 	} else {
-		log.Printf("🧪 Using MOCK mode for Payment Service (no real connection)")
+		log.Printf("🧪 Using MOCK mode for Payment and Booking Services (no real connection)")
 	}
 
 	return &PaymentServiceGRPCClient{
-		conn:       conn,
-		grpcClient: grpcClient,
-		mapper:     mapper.NewPaymentInfraGRPCMapper(),
-		timeout:    timeout,
-		useMock:    useMock,
+		conn:          conn,
+		bookingConn:   bookingConn,
+		grpcClient:    grpcClient,
+		bookingClient: bookingClient,
+		mapper:        mapper.NewPaymentInfraGRPCMapper(),
+		timeout:       timeout,
+		useMock:       useMock,
 	}, nil
 }
 
@@ -76,7 +97,7 @@ func (c *PaymentServiceGRPCClient) GetPaymentInfraByQrValue(ctx context.Context,
 		response = c.mockGetPaymentInfraByQrValue(request)
 	} else {
 		// Llamada real al servicio gRPC
-		grpcRequest := &pb.GetPaymentInfraByQrValueRequest{
+		grpcRequest := &paymentpb.GetPaymentInfraByQrValueRequest{
 			QrValue: request.QrValue,
 		}
 
@@ -211,8 +232,26 @@ func (c *PaymentServiceGRPCClient) CheckBookingStatus(ctx context.Context, servi
 
 	request := c.mapper.ToCheckBookingStatusRequest(serviceName, currentCode)
 
-	// Mock por ahora
-	response := c.mockCheckBookingStatus(request)
+	var response *dto.CheckBookingStatusResponse
+
+	if c.useMock {
+		response = c.mockCheckBookingStatus(request)
+	} else {
+		// Llamada real al servicio gRPC de Booking
+		grpcRequest := &bookingpb.CheckBookingStatusRequest{
+			ServiceName: request.ServiceName,
+			CurrentCode: request.CurrentCode,
+		}
+
+		grpcResponse, err := c.bookingClient.CheckBookingStatus(ctx, grpcRequest)
+		if err != nil {
+			log.Printf("❌ Booking gRPC call failed: %v", err)
+			return nil, c.mapGRPCError(err)
+		}
+
+		// Mapear respuesta de gRPC a DTO
+		response = c.mapper.FromGRPCCheckBookingStatusResponse(grpcResponse)
+	}
 
 	if response == nil {
 		return nil, exception.ErrPaymentInfraServiceUnavailable
@@ -232,8 +271,17 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 
 	request := c.mapper.ToExecuteOpenRequest(serviceName, currentCode)
 
-	// Mock por ahora
-	response := c.mockExecuteOpen(request)
+	var response *dto.ExecuteOpenResponse
+
+	if c.useMock {
+		response = c.mockExecuteOpen(request)
+	} else {
+		// Nota: ExecuteOpen es un stream bidireccional en el proto
+		// Por ahora implementamos una versión simple (no-stream)
+		// TODO: Implementar streaming cuando sea necesario
+		log.Printf("⚠️ ExecuteOpen: Streaming not implemented, using mock")
+		response = c.mockExecuteOpen(request)
+	}
 
 	if response == nil {
 		return nil, exception.ErrPaymentInfraServiceUnavailable
@@ -246,12 +294,20 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 	return c.mapper.ToExecuteOpenDomain(response), nil
 }
 
-// Close cierra la conexión gRPC
+// Close cierra las conexiones gRPC
 func (c *PaymentServiceGRPCClient) Close() error {
+	var err error
 	if c.conn != nil {
-		return c.conn.Close()
+		if closeErr := c.conn.Close(); closeErr != nil {
+			err = closeErr
+		}
 	}
-	return nil
+	if c.bookingConn != nil {
+		if closeErr := c.bookingConn.Close(); closeErr != nil {
+			err = closeErr
+		}
+	}
+	return err
 }
 
 // mapGRPCError mapea errores gRPC a errores de dominio

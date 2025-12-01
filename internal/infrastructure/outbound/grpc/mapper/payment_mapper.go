@@ -1,7 +1,8 @@
 package mapper
 
 import (
-	pb "graphql-payment-bff/gen/go/v1"
+	bookingpb "graphql-payment-bff/gen/go/proto/booking"
+	paymentpb "graphql-payment-bff/gen/go/proto/payment"
 	"graphql-payment-bff/internal/domain/model"
 	"graphql-payment-bff/internal/infrastructure/outbound/grpc/dto"
 )
@@ -391,7 +392,7 @@ func (m *PaymentInfraGRPCMapper) mapOpenStatus(status dto.OpenStatus) model.Open
 }
 
 // FromGRPCGetPaymentInfraResponse mapea la respuesta proto de gRPC al DTO interno
-func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.GetPaymentInfraByQrValueResponse) *dto.GetPaymentInfraByQrValueResponse {
+func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *paymentpb.GetPaymentInfraByQrValueResponse) *dto.GetPaymentInfraByQrValueResponse {
 	if protoResp == nil {
 		return nil
 	}
@@ -402,7 +403,7 @@ func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.G
 
 	// Mapear response metadata
 	if protoResp.Response != nil {
-		response.Response = &dto.PaymentManagerResponse{
+		response.Response = &dto.PaymentManagerGenericResponse{
 			TransactionId: protoResp.Response.TransactionId,
 			Message:       protoResp.Response.Message,
 			Status:        dto.PaymentManagerResponseStatus(protoResp.Response.Status),
@@ -411,7 +412,7 @@ func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.G
 
 	// Mapear PaymentRack
 	if protoResp.PaymentRack != nil {
-		response.PaymentRack = &dto.PaymentRackDTO{
+		response.PaymentRack = &dto.PaymentRackRecord{
 			Id:          protoResp.PaymentRack.Id,
 			Description: protoResp.PaymentRack.Description,
 			Address:     protoResp.PaymentRack.Address,
@@ -420,7 +421,7 @@ func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.G
 
 	// Mapear Installation
 	if protoResp.Installation != nil {
-		response.Installation = &dto.InstallationDTO{
+		response.Installation = &dto.PaymentInstallationRecord{
 			Id:       protoResp.Installation.Id,
 			Name:     protoResp.Installation.Name,
 			Region:   protoResp.Installation.Region,
@@ -432,14 +433,53 @@ func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.G
 
 	// Mapear BookingTimes
 	if len(protoResp.BookingTimes) > 0 {
-		response.BookingTimes = make([]*dto.BookingTimeDTO, len(protoResp.BookingTimes))
+		response.BookingTimes = make([]*dto.PaymentBookingTimeRecord, len(protoResp.BookingTimes))
 		for i, bt := range protoResp.BookingTimes {
-			response.BookingTimes[i] = &dto.BookingTimeDTO{
+			response.BookingTimes[i] = &dto.PaymentBookingTimeRecord{
 				Id:              bt.Id,
 				Name:            bt.Name,
-				UnitMeasurement: bt.UnitMeasurement,
+				UnitMeasurement: dto.UnitMeasurement(bt.UnitMeasurement),
 				Amount:          bt.Amount,
 			}
+		}
+	}
+
+	return response
+}
+
+// FromGRPCCheckBookingStatusResponse mapea la respuesta proto de gRPC de booking al DTO interno
+func (m *PaymentInfraGRPCMapper) FromGRPCCheckBookingStatusResponse(protoResp *bookingpb.CheckBookingStatusResponse) *dto.CheckBookingStatusResponse {
+	if protoResp == nil {
+		return nil
+	}
+
+	response := &dto.CheckBookingStatusResponse{}
+
+	// Mapear response metadata
+	if protoResp.Response != nil {
+		response.Response = &dto.PaymentManagerGenericResponse{
+			TransactionId: protoResp.Response.TransactionId,
+			Message:       protoResp.Response.Message,
+			Status:        dto.PaymentManagerResponseStatus(protoResp.Response.Status),
+		}
+	}
+
+	// Mapear BookingRecord
+	if protoResp.Booking != nil {
+		response.Booking = &dto.BookingStatusRecord{
+			Id:                     protoResp.Booking.Id,
+			ConfigurationBookingId: protoResp.Booking.ConfigurationBookingId,
+			InitBooking:            protoResp.Booking.InitBooking,
+			FinishBooking:          protoResp.Booking.FinishBooking,
+			InstallationName:       protoResp.Booking.InstallationName,
+			NumberLocker:           protoResp.Booking.NumberLocker,
+			DeviceId:               protoResp.Booking.DeviceId,
+			CurrentCode:            protoResp.Booking.CurrentCode,
+			Openings:               protoResp.Booking.Openings,
+			ServiceName:            protoResp.Booking.ServiceName,
+			EmailRecipient:         protoResp.Booking.EmailRecipient,
+			CreatedAt:              protoResp.Booking.CreatedAt,
+			UpdatedAt:              protoResp.Booking.UpdatedAt,
 		}
 	}
 
