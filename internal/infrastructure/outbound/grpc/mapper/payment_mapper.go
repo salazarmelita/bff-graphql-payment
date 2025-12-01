@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	pb "graphql-payment-bff/gen/go/v1"
 	"graphql-payment-bff/internal/domain/model"
 	"graphql-payment-bff/internal/infrastructure/outbound/grpc/dto"
 )
@@ -387,4 +388,60 @@ func (m *PaymentInfraGRPCMapper) mapOpenStatus(status dto.OpenStatus) model.Open
 	default:
 		return model.OpenStatusUnspecified
 	}
+}
+
+// FromGRPCGetPaymentInfraResponse mapea la respuesta proto de gRPC al DTO interno
+func (m *PaymentInfraGRPCMapper) FromGRPCGetPaymentInfraResponse(protoResp *pb.GetPaymentInfraByQrValueResponse) *dto.GetPaymentInfraByQrValueResponse {
+	if protoResp == nil {
+		return nil
+	}
+
+	response := &dto.GetPaymentInfraByQrValueResponse{
+		TraceId: protoResp.TraceId,
+	}
+
+	// Mapear response metadata
+	if protoResp.Response != nil {
+		response.Response = &dto.PaymentManagerResponse{
+			TransactionId: protoResp.Response.TransactionId,
+			Message:       protoResp.Response.Message,
+			Status:        dto.PaymentManagerResponseStatus(protoResp.Response.Status),
+		}
+	}
+
+	// Mapear PaymentRack
+	if protoResp.PaymentRack != nil {
+		response.PaymentRack = &dto.PaymentRackDTO{
+			Id:          protoResp.PaymentRack.Id,
+			Description: protoResp.PaymentRack.Description,
+			Address:     protoResp.PaymentRack.Address,
+		}
+	}
+
+	// Mapear Installation
+	if protoResp.Installation != nil {
+		response.Installation = &dto.InstallationDTO{
+			Id:       protoResp.Installation.Id,
+			Name:     protoResp.Installation.Name,
+			Region:   protoResp.Installation.Region,
+			City:     protoResp.Installation.City,
+			Address:  protoResp.Installation.Address,
+			ImageUrl: protoResp.Installation.ImageUrl,
+		}
+	}
+
+	// Mapear BookingTimes
+	if len(protoResp.BookingTimes) > 0 {
+		response.BookingTimes = make([]*dto.BookingTimeDTO, len(protoResp.BookingTimes))
+		for i, bt := range protoResp.BookingTimes {
+			response.BookingTimes[i] = &dto.BookingTimeDTO{
+				Id:              bt.Id,
+				Name:            bt.Name,
+				UnitMeasurement: bt.UnitMeasurement,
+				Amount:          bt.Amount,
+			}
+		}
+	}
+
+	return response
 }

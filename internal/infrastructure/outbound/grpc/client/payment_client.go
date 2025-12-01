@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	pb "graphql-payment-bff/gen/go/v1"
 	"graphql-payment-bff/internal/application/ports"
 	"graphql-payment-bff/internal/domain/exception"
 	"graphql-payment-bff/internal/domain/model"
@@ -19,15 +20,17 @@ import (
 
 // PaymentServiceGRPCClient implementa PaymentInfraRepository usando gRPC
 type PaymentServiceGRPCClient struct {
-	conn    *grpc.ClientConn
-	mapper  *mapper.PaymentInfraGRPCMapper
-	timeout time.Duration
-	useMock bool // Flag para determinar si usar mocks o cliente real
+	conn       *grpc.ClientConn
+	grpcClient pb.PaymentManagerServiceClient
+	mapper     *mapper.PaymentInfraGRPCMapper
+	timeout    time.Duration
+	useMock    bool // Flag para determinar si usar mocks o cliente real
 }
 
 // NewPaymentServiceGRPCClient crea un nuevo cliente gRPC para el servicio de pagos
 func NewPaymentServiceGRPCClient(serverAddress string, timeout time.Duration, useMock bool) (*PaymentServiceGRPCClient, error) {
 	var conn *grpc.ClientConn
+	var grpcClient pb.PaymentManagerServiceClient
 	var err error
 
 	// Solo intentar conectar si NO estamos usando mocks
@@ -42,16 +45,18 @@ func NewPaymentServiceGRPCClient(serverAddress string, timeout time.Duration, us
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to payment service: %w", err)
 		}
+		grpcClient = pb.NewPaymentManagerServiceClient(conn)
 		log.Printf("✅ Connected to Payment Service successfully")
 	} else {
 		log.Printf("🧪 Using MOCK mode for Payment Service (no real connection)")
 	}
 
 	return &PaymentServiceGRPCClient{
-		conn:    conn,
-		mapper:  mapper.NewPaymentInfraGRPCMapper(),
-		timeout: timeout,
-		useMock: useMock,
+		conn:       conn,
+		grpcClient: grpcClient,
+		mapper:     mapper.NewPaymentInfraGRPCMapper(),
+		timeout:    timeout,
+		useMock:    useMock,
 	}, nil
 }
 
@@ -70,17 +75,19 @@ func (c *PaymentServiceGRPCClient) GetPaymentInfraByQrValue(ctx context.Context,
 	if c.useMock {
 		response = c.mockGetPaymentInfraByQrValue(request)
 	} else {
-		// TODO: Aquí irá la llamada real al servicio gRPC cuando los protos estén disponibles
-		// grpcClient := pb.NewPaymentServiceClient(c.conn)
-		// grpcResponse, err := grpcClient.GetPaymentInfraByQrValue(ctx, request)
-		// if err != nil {
-		//     return nil, c.mapGRPCError(err)
-		// }
-		// response = c.mapper.FromGRPCResponse(grpcResponse)
+		// Llamada real al servicio gRPC
+		grpcRequest := &pb.GetPaymentInfraByQrValueRequest{
+			QrValue: request.QrValue,
+		}
 
-		// Por ahora, fallback a mock si no está implementado
-		log.Printf("⚠️  Real gRPC call not yet implemented, falling back to mock")
-		response = c.mockGetPaymentInfraByQrValue(request)
+		grpcResponse, err := c.grpcClient.GetPaymentInfraByQrValue(ctx, grpcRequest)
+		if err != nil {
+			log.Printf("❌ gRPC call failed: %v", err)
+			return nil, c.mapGRPCError(err)
+		}
+
+		// Mapear respuesta de gRPC a DTO
+		response = c.mapper.FromGRPCGetPaymentInfraResponse(grpcResponse)
 	}
 
 	// Manejar errores
