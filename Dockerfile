@@ -3,6 +3,9 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
+# Ensure Go modules mode is enabled inside the builder
+ENV GO111MODULE=on
+
 # Instalar dependencias necesarias
 RUN apk add --no-cache git ca-certificates tzdata
 
@@ -13,8 +16,8 @@ RUN go mod download
 # Copiar código fuente (incluyendo gen/ generado previamente en workflow)
 COPY . .
 
-# Compilar la aplicación
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main cmd/server/main.go
+# Compilar la aplicación (explicitly use modules)
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=mod -a -installsuffix cgo -o main cmd/server/main.go
 
 # Final stage
 FROM alpine:latest
