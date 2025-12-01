@@ -3,15 +3,22 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Instalar dependencias necesarias
-RUN apk add --no-cache git ca-certificates tzdata
+# Instalar dependencias necesarias incluyendo buf
+RUN apk add --no-cache git ca-certificates tzdata curl && \
+    curl -sSL "https://github.com/bufbuild/buf/releases/download/v1.47.2/buf-Linux-x86_64" -o /usr/local/bin/buf && \
+    chmod +x /usr/local/bin/buf
 
-# Copiar go mod y sum
-COPY go.mod go.sum ./
+# Copiar archivos de configuración de buf y go
+COPY buf.yaml buf.gen.yaml go.mod go.sum ./
+
+# Descargar dependencias de Go
 RUN go mod download
 
-# Copiar el resto del código fuente (incluyendo proto files generados previamente)
+# Copiar el resto del código fuente
 COPY . .
+
+# Generar código desde protos remotos
+RUN buf generate
 
 # Compilar la aplicación
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main cmd/server/main.go

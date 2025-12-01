@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Generated code (se regenerará en Docker)
+gen/
+
+# IDE
+.vscode/
+.idea/
+
+# Env files
+.env
+.env.local
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Scripts
+scripts/
+
+# Legacy
+legacy/
+
+# Tests
+*_test.go
+
+# Kubernetes
+k8s/
