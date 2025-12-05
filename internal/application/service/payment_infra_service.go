@@ -103,7 +103,7 @@ func (s *PaymentInfraService) GeneratePurchaseOrder(ctx context.Context, groupID
 	}
 
 	// Llamar al repositorio
-	order, err := s.repo.GeneratePurchaseOrder(ctx, groupID, couponCode, userEmail, userPhone, traceID, gatewayName)
+	order, err := s.repo.GeneratePurchaseOrder(ctx, rackIdReference, groupID, couponCode, userEmail, userPhone, traceID, gatewayName)
 	if err != nil {
 		return nil, err
 	}
@@ -112,10 +112,14 @@ func (s *PaymentInfraService) GeneratePurchaseOrder(ctx context.Context, groupID
 }
 
 // GenerateBooking genera una reserva de locker
-func (s *PaymentInfraService) GenerateBooking(ctx context.Context, purchaseOrder string, traceID string) (*model.Booking, error) {
+func (s *PaymentInfraService) GenerateBooking(ctx context.Context, rackIdReference int, groupID int, couponCode *string, userEmail string, userPhone string, traceID string) (*model.Booking, error) {
 	// Validar entrada
-	if strings.TrimSpace(purchaseOrder) == "" {
-		return nil, exception.ErrInvalidPurchaseOrder
+	if rackIdReference <= 0 {
+		return nil, exception.ErrInvalidRackID
+	}
+
+	if groupID <= 0 {
+		return nil, exception.ErrInvalidGroupID
 	}
 
 	if strings.TrimSpace(traceID) == "" {
@@ -123,7 +127,7 @@ func (s *PaymentInfraService) GenerateBooking(ctx context.Context, purchaseOrder
 	}
 
 	// Llamar al repositorio
-	booking, err := s.repo.GenerateBooking(ctx, purchaseOrder, traceID)
+	booking, err := s.repo.GenerateBooking(ctx, rackIdReference, groupID, couponCode, userEmail, userPhone, traceID)
 	if err != nil {
 		return nil, err
 	}
