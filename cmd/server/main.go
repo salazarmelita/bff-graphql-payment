@@ -121,12 +121,14 @@ func getConfig() config.Config {
 		cfg.General.Environment = env
 	}
 
-	// Mock configuration - default is true, set to false if USE_MOCK explicitly set to "false"
-	cfg.General.UseMock = true // default
-	if useMock := os.Getenv("USE_MOCK"); useMock == "false" {
-		cfg.General.UseMock = false
-	} else if useMock == "true" {
-		cfg.General.UseMock = true
+	// Mock configuration - default based on environment
+	// In deployed environments (dev/prod), default to false (real APIs)
+	// In local development, default to true (mocks)
+	if useMockEnv := os.Getenv("USE_MOCK"); useMockEnv != "" {
+		cfg.General.UseMock = (useMockEnv == "true")
+	} else {
+		// Default: use mocks only in local development (when ENV is empty or "development")
+		cfg.General.UseMock = (cfg.General.Environment == "development" || cfg.General.Environment == "")
 	}
 
 	// Payment Service gRPC configuration (concatenate HOST:PORT like legacy)
