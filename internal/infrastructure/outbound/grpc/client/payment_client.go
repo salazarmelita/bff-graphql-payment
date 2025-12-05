@@ -163,11 +163,11 @@ func (c *PaymentServiceGRPCClient) ValidateDiscountCoupon(ctx context.Context, c
 }
 
 // GeneratePurchaseOrder implementa PaymentInfraRepository.GeneratePurchaseOrder
-func (c *PaymentServiceGRPCClient) GeneratePurchaseOrder(ctx context.Context, groupID int, couponCode *string, userEmail string, userPhone string, traceID string, gatewayName string) (*model.PurchaseOrder, error) {
+func (c *PaymentServiceGRPCClient) GeneratePurchaseOrder(ctx context.Context, rackIdReference int, groupID int, couponCode *string, userEmail string, userPhone string, traceID string, gatewayName string) (*model.PurchaseOrder, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	request := c.mapper.ToGeneratePurchaseOrderRequest(groupID, couponCode, userEmail, userPhone, traceID, gatewayName)
+	request := c.mapper.ToGeneratePurchaseOrderRequest(rackIdReference, groupID, couponCode, userEmail, userPhone, traceID, gatewayName)
 
 	// Mock por ahora
 	response := c.mockGeneratePurchaseOrder(request)
@@ -184,11 +184,11 @@ func (c *PaymentServiceGRPCClient) GeneratePurchaseOrder(ctx context.Context, gr
 }
 
 // GenerateBooking implementa PaymentInfraRepository.GenerateBooking
-func (c *PaymentServiceGRPCClient) GenerateBooking(ctx context.Context, purchaseOrder string, traceID string) (*model.Booking, error) {
+func (c *PaymentServiceGRPCClient) GenerateBooking(ctx context.Context, rackIdReference int, groupID int, couponCode *string, userEmail string, userPhone string, traceID string) (*model.Booking, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	request := c.mapper.ToGenerateBookingRequest(purchaseOrder, traceID)
+	request := c.mapper.ToGenerateBookingRequest(rackIdReference, groupID, couponCode, userEmail, userPhone, traceID)
 
 	// Mock por ahora
 	response := c.mockGenerateBooking(request)
