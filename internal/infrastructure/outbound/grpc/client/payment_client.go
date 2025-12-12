@@ -432,9 +432,22 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 				log.Printf("❌ ExecuteOpen failed to receive: %v", err)
 				return nil, c.mapGRPCError(err)
 			}
+
 			lastResponse = resp
 			log.Printf("📥 ExecuteOpen received status: %v", resp.Status)
+
+			// Si recibimos un estado terminal, salimos inmediatamente para devolver resultado rápido.
+			switch resp.Status {
+			case bookingpb.OpenStatus_OPEN_STATUS_REQUESTED,
+				bookingpb.OpenStatus_OPEN_STATUS_EXECUTED,
+				bookingpb.OpenStatus_OPEN_STATUS_ERROR,
+				bookingpb.OpenStatus_OPEN_STATUS_SUCCESS:
+				log.Printf("🤖 ExecuteOpen received terminal status: %v", resp.Status)
+				// usamos lastResponse y dejamos el loop
+				goto STREAM_DONE
+			}
 		}
+	STREAM_DONE:
 
 		if lastResponse == nil {
 			log.Printf("❌ ExecuteOpen - No response received from stream")
