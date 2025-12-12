@@ -378,26 +378,87 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 
 	request := c.mapper.ToExecuteOpenRequest(serviceName, currentCode)
 
+	log.Printf("ExecuteOpen - Request: serviceName=%s, currentCode=%s", serviceName, currentCode)
+
 	var response *dto.ExecuteOpenResponse
 
 	if c.useMock {
+		log.Printf("Using MOCK mode for ExecuteOpen")
 		response = c.mockExecuteOpen(request)
 	} else {
-		// Nota: ExecuteOpen es un stream bidireccional en el proto
-		// Por ahora implementamos una versión simple (no-stream)
-		// TODO: Implementar streaming cuando sea necesario
-		log.Printf("⚠️ ExecuteOpen: Streaming not implemented, using mock")
-		response = c.mockExecuteOpen(request)
+		// ExecuteOpen es un stream bidireccional en el proto del servicio de booking
+		// Implementamos versión simplificada: enviar un mensaje y recibir respuestas hasta completar
+		log.Printf("📞 Calling gRPC streaming service for ExecuteOpen")
+
+		stream, err := c.bookingClient.ExecuteOpen(ctx)
+		if err != nil {
+			log.Printf("❌ ExecuteOpen failed to create stream: %v", err)
+			return nil, c.mapGRPCError(err)
+		}
+
+		// Enviar request al stream
+		grpcRequest := &bookingpb.ExecuteOpenRequest{
+			ServiceName: request.ServiceName,
+			CurrentCode: request.CurrentCode,
+		}
+
+		if err := stream.Send(grpcRequest); err != nil {
+			log.Printf("❌ ExecuteOpen failed to send request: %v", err)
+			return nil, c.mapGRPCError(err)
+		}
+
+		// Cerrar el envío para indicar que no enviaremos más
+		if err := stream.CloseSend(); err != nil {
+			log.Printf("❌ ExecuteOpen failed to close send: %v", err)
+			return nil, c.mapGRPCError(err)
+		}
+
+		// Recibir la(s) respuesta(s) del stream
+		// Para simplificar en GraphQL, tomamos la última respuesta recibida
+		var lastResponse *bookingpb.ExecuteOpenResponse
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				// io.EOF significa que el stream terminó normalmente
+				if err.Error() == "EOF" {
+					break
+				}
+				log.Printf("❌ ExecuteOpen failed to receive: %v", err)
+				return nil, c.mapGRPCError(err)
+			}
+			lastResponse = resp
+			log.Printf("📥 ExecuteOpen received status: %v", resp.Status)
+		}
+
+		if lastResponse == nil {
+			log.Printf("❌ ExecuteOpen - No response received from stream")
+			return nil, exception.ErrPaymentInfraServiceUnavailable
+		}
+
+		// Convertir a DTO interno
+		response = &dto.ExecuteOpenResponse{
+			Status: dto.OpenStatus(lastResponse.Status),
+			Response: &dto.PaymentManagerGenericResponse{
+				TransactionId: lastResponse.Response.TransactionId,
+				Message:       lastResponse.Response.Message,
+				Status:        dto.PaymentManagerResponseStatus(lastResponse.Response.Status),
+			},
+		}
+
+		log.Printf("✅ ExecuteOpen - Stream completed successfully")
 	}
 
 	if response == nil {
+		log.Printf("❌ ExecuteOpen - Response is nil")
 		return nil, exception.ErrPaymentInfraServiceUnavailable
 	}
 
 	if response.Response != nil && response.Response.Status == dto.PaymentManagerResponseStatus_RESPONSE_STATUS_ERROR {
+		log.Printf("❌ ExecuteOpen - Response status is ERROR: %s", response.Response.Message)
 		return nil, exception.ErrExecuteOpenFailed
 	}
 
+	log.Printf("✅ ExecuteOpen - Success: status=%v, message=%s", response.Status, response.Response.Message)
 	return c.mapper.ToExecuteOpenDomain(response), nil
 }
 
