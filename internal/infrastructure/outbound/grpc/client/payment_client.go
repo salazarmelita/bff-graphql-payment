@@ -467,7 +467,9 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 			Response: genericResp,
 		}
 
-		log.Printf("✅ ExecuteOpen - Stream handling completed (lastStatus=%v)", lastResponse.Status)
+		log.Printf("📡 ExecuteOpen - Stream handling completed (lastStatus=%v)", lastResponse.Status)
+		log.Printf("📡 gRPC RESPONSE DETAILS: Status=%v, TransactionId=%s, Message=%s, ResponseStatus=%v",
+			response.Status, response.Response.TransactionId, response.Response.Message, response.Response.Status)
 	}
 
 	if response == nil {
@@ -478,11 +480,16 @@ func (c *PaymentServiceGRPCClient) ExecuteOpen(ctx context.Context, serviceName 
 	if response.Response != nil && response.Response.Status == dto.PaymentManagerResponseStatus_RESPONSE_STATUS_ERROR {
 		log.Printf("⚠️ ExecuteOpen - Response status is ERROR: %s", response.Response.Message)
 		// Devolvemos el resultado tal cual para que el caller (GraphQL) pueda mostrar el estado/reportado por booking
-		return c.mapper.ToExecuteOpenDomain(response), nil
+		domainResult := c.mapper.ToExecuteOpenDomain(response)
+		log.Printf("🔄 gRPC -> DOMAIN MAPPING: Mapped to domain with OpenStatus=%v, Status=%v", domainResult.OpenStatus, domainResult.Status)
+		return domainResult, nil
 	}
 
 	log.Printf("✅ ExecuteOpen - Success: status=%v, message=%s", response.Status, response.Response.Message)
-	return c.mapper.ToExecuteOpenDomain(response), nil
+	domainResult := c.mapper.ToExecuteOpenDomain(response)
+	log.Printf("🔄 gRPC -> DOMAIN MAPPING: Mapped to domain with OpenStatus=%v, Status=%v, TransactionId=%s",
+		domainResult.OpenStatus, domainResult.Status, domainResult.TransactionID)
+	return domainResult, nil
 }
 
 // Close cierra las conexiones gRPC
