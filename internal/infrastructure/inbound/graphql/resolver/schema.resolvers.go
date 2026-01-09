@@ -59,14 +59,29 @@ func (r *mutationResolver) GenerateBooking(ctx context.Context, input model.Gene
 
 // ExecuteOpen is the resolver for the executeOpen field.
 func (r *mutationResolver) ExecuteOpen(ctx context.Context, input model.ExecuteOpenInput) (*model.ExecuteOpenResponse, error) {
+	// Log de entrada
+	fmt.Printf("🔷 GraphQL Resolver - ExecuteOpen REQUEST: serviceName=%s, currentCode=%s\n",
+		input.ServiceName, input.CurrentCode)
+
 	// Llamar al caso de uso
 	openResult, err := r.paymentInfraService.ExecuteOpen(ctx, input.ServiceName, input.CurrentCode)
 	if err != nil {
+		fmt.Printf("❌ GraphQL Resolver - ExecuteOpen FAILED: %v\n", err)
 		return nil, fmt.Errorf("failed to execute open: %w", err)
 	}
 
+	// Log de la respuesta del dominio (antes del mapeo)
+	fmt.Printf("📦 GraphQL Resolver - ExecuteOpen DOMAIN RESPONSE: transactionId=%s, status=%v, openStatus=%v, message=%s\n",
+		openResult.TransactionID, openResult.Status, openResult.OpenStatus, openResult.Message)
+
 	// Mapear a respuesta GraphQL
-	return r.mapper.ToExecuteOpenResponse(openResult), nil
+	graphQLResponse := r.mapper.ToExecuteOpenResponse(openResult)
+
+	// Log de la respuesta final que se enviará al frontend
+	fmt.Printf("📦 GraphQL Resolver - ExecuteOpen GRAPHQL RESPONSE TO FRONTEND: transactionId=%s, status=%v, openStatus=%v, message=%s\n",
+		graphQLResponse.TransactionID, graphQLResponse.Status, graphQLResponse.OpenStatus, graphQLResponse.Message)
+
+	return graphQLResponse, nil
 }
 
 // GetPaymentInfraByQRValue is the resolver for the getPaymentInfraByQrValue field.
